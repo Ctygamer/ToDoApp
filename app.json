@@ -9,13 +9,15 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ctygamer.ToDoApp"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.ctygamer.ToDoApp"
     },
     "web": {
       "bundler": "metro",
@@ -36,6 +38,14 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "da75207d-3488-4c95-8e75-cbee0e06c5cb"
+      }
     }
   }
 }
