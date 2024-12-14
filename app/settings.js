@@ -31,7 +31,11 @@ export default function Settings() {
       if (savedOption) {
         setSelectedOption(savedOption);
         if (savedOption !== "disabled") {
-          await setNotification(savedOption);
+          try {
+            await setNotification(savedOption);
+          } catch (error) {
+            console.error("Fehler beim Setzen der Benachrichtigung:", error);
+          }
         }
       }
     };
@@ -60,17 +64,21 @@ export default function Settings() {
 
   // Funktion zum Planen von Push-Benachrichtigungen
   const setNotification = async (interval) => {
-    await Notifications.cancelAllScheduledNotificationsAsync(); // Alte Benachrichtigungen entfernen
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: "Erinnerung",
-        body: "Hast du deine Aufgaben erledigt?",
-      },
-      trigger: {
-        seconds: parseInt(interval) * 60, // Sicherstellen, dass "interval" eine Zahl ist
-        repeats: true, // Wiederholung aktivieren
-      },
-    });
+    try {
+      await Notifications.cancelAllScheduledNotificationsAsync(); // Alte Benachrichtigungen entfernen
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: "Erinnerung",
+          body: "Hast du deine Aufgaben erledigt?",
+        },
+        trigger: {
+          seconds: parseInt(interval) * 60, // Sicherstellen, dass "interval" eine Zahl ist
+          repeats: true, // Wiederholung aktivieren
+        },
+      });
+    } catch (error) {
+      console.error("Fehler beim Planen der Benachrichtigung:", error);
+    }
   };
 
   // Handler-Funktion für die Buttons
@@ -79,14 +87,22 @@ export default function Settings() {
     await saveNotificationOption(option.value); // Auswahl speichern
 
     if (option.value === "disabled") {
-      await Notifications.cancelAllScheduledNotificationsAsync();
-      Alert.alert("Benachrichtigungen deaktiviert"); // Benachrichtigungen deaktivieren
+      try {
+        await Notifications.cancelAllScheduledNotificationsAsync();
+        Alert.alert("Benachrichtigungen deaktiviert"); // Benachrichtigungen deaktivieren
+      } catch (error) {
+        console.error("Fehler beim Deaktivieren der Benachrichtigungen:", error);
+      }
     } else {
-      await setNotification(option.value); // Benachrichtigungen planen
-      Alert.alert(
-        "Benachrichtigungen aktiviert",
-        `Erinnerung alle ${option.value} Minuten eingestellt.` // Feedback für den Nutzer
-      );
+      try {
+        await setNotification(option.value); // Benachrichtigungen planen
+        Alert.alert(
+          "Benachrichtigungen aktiviert",
+          `Erinnerung alle ${option.value} Minuten eingestellt.` // Feedback für den Nutzer
+        );
+      } catch (error) {
+        console.error("Fehler beim Aktivieren der Benachrichtigungen:", error);
+      }
     }
   };
 
