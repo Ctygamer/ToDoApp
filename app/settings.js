@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, StyleSheet, Text, Pressable, Alert } from "react-native";
 import * as Notifications from "expo-notifications";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Settings() {
   const [selectedOption, setSelectedOption] = useState(null);
@@ -15,7 +16,8 @@ export default function Settings() {
 
   // Einmalige Initialisierung, um die Benachrichtigungsberechtigung abzufragen
   useEffect(() => {
-    const getPermission = async () => {
+    const initializeNotifications = async () => {
+      // Berechtigung anfordern
       const { status } = await Notifications.requestPermissionsAsync();
       if (status !== "granted") {
         Alert.alert(
@@ -23,9 +25,38 @@ export default function Settings() {
           "Bitte aktiviere Benachrichtigungen in den Einstellungen."
         );
       }
+
+      // Gespeicherte Option laden
+      const savedOption = await loadNotificationOption();
+      if (savedOption) {
+        setSelectedOption(savedOption);
+        if (savedOption !== "disabled") {
+          await setNotification(savedOption);
+        }
+      }
     };
-    getPermission(); // Berechtigungen anfordern
-  }, []);           // Läuft nur einmal nach der Initialisierung
+    initializeNotifications();
+  }, []);
+
+  // Funktion zum Speichern der Benachrichtigungseinstellung in AsyncStorage
+  const saveNotificationOption = async (option) => {
+    try {
+      await AsyncStorage.setItem("notificationOption", JSON.stringify(option));
+    } catch (error) {
+      console.error("Fehler beim Speichern der Benachrichtigungseinstellung:", error);
+    }
+  };
+
+  // Funktion zum Laden der Benachrichtigungseinstellung aus AsyncStorage
+  const loadNotificationOption = async () => {
+    try {
+      const savedOption = await AsyncStorage.getItem("notificationOption");
+      return savedOption ? JSON.parse(savedOption) : null;
+    } catch (error) {
+      console.error("Fehler beim Laden der Benachrichtigungseinstellung:", error);
+      return null;
+    }
+  };
 
   // Funktion zum Planen von Push-Benachrichtigungen
   const setNotification = async (interval) => {
@@ -37,7 +68,7 @@ export default function Settings() {
       },
       trigger: {
         seconds: parseInt(interval) * 60, // Sicherstellen, dass "interval" eine Zahl ist
-        repeats: true,                    // Wiederholung aktivieren
+        repeats: true, // Wiederholung aktivieren
       },
     });
   };
@@ -45,15 +76,16 @@ export default function Settings() {
   // Handler-Funktion für die Buttons
   const handlePress = async (option) => {
     setSelectedOption(option.value); // Ausgewählte Option speichern
+    await saveNotificationOption(option.value); // Auswahl speichern
 
     if (option.value === "disabled") {
       await Notifications.cancelAllScheduledNotificationsAsync();
-      Alert.alert("Benachrichtigungen deaktiviert");   // Benachrichtigungen deaktivieren
+      Alert.alert("Benachrichtigungen deaktiviert"); // Benachrichtigungen deaktivieren
     } else {
-      await setNotification(option.value);  // Benachrichtigungen planen
+      await setNotification(option.value); // Benachrichtigungen planen
       Alert.alert(
         "Benachrichtigungen aktiviert",
-        `Erinnerung alle ${option.value} Minuten eingestellt.`   // Feedback für den Nutzer
+        `Erinnerung alle ${option.value} Minuten eingestellt.` // Feedback für den Nutzer
       );
     }
   };
@@ -77,7 +109,7 @@ export default function Settings() {
                 selectedOption === option.value && styles.selectedOptionText,
               ]}
             >
-              {option.value === "disabled" && selectedOption === "disabled"  // Text des Buttons: Ändert sich, wenn "Benachrichtigungen deaktivieren" ausgewählt ist
+              {option.value === "disabled" && selectedOption === "disabled" // Text des Buttons: Ändert sich, wenn "Benachrichtigungen deaktivieren" ausgewählt ist
                 ? "Benachrichtigung deaktiviert"
                 : option.label}
             </Text>
